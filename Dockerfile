@@ -14,6 +14,7 @@ RUN add-apt-repository -y ppa:brightbox/ruby-ng && \
 ADD assets/setup/ /redmine/setup/
 RUN chmod 755 /redmine/setup/install
 RUN /redmine/setup/install
+RUN /redmine/setup/email-subjects-patch
 
 ADD assets/config/ /redmine/setup/config/
 ADD assets/init /redmine/init

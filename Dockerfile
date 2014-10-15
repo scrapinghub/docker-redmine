@@ -1,26 +1,33 @@
-FROM sameersbn/ubuntu:12.04.20140818
+FROM sameersbn/ubuntu:14.04.20141001
 MAINTAINER sameer@damagehead.com
 
-RUN add-apt-repository -y ppa:brightbox/ruby-ng && \
-    apt-get update && \
-    apt-get install -y make imagemagick nginx \
-      mysql-server memcached subversion git cvs bzr ruby2.1 \
-      ruby2.1-dev libcurl4-openssl-dev libssl-dev \
-      libmagickcore-dev libmagickwand-dev libmysqlclient-dev libpq-dev \
-      libxslt1-dev libffi-dev libyaml-dev zlib1g-dev libzlib-ruby && \
-    gem install --no-ri --no-rdoc bundler && \
-    rm -rf /var/lib/apt/lists/* # 20140818
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv C3173AA6 \
+ && echo "deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main" >> /etc/apt/sources.list \
+ && apt-key adv --keyserver keyserver.ubuntu.com --recv C300EE8C \
+ && echo "deb http://ppa.launchpad.net/nginx/stable/ubuntu trusty main" >> /etc/apt/sources.list \
+ && apt-get update \
+ && apt-get install -y supervisor logrotate nginx mysql-client postgresql-client \
+      imagemagick subversion git cvs bzr mercurial rsync ruby2.1 locales \
+      gcc g++ make patch pkg-config ruby2.1-dev libc6-dev \
+      libmysqlclient18 libpq5 libyaml-0-2 libcurl3 libssl1.0.0 \
+      libxslt1.1 libffi6 zlib1g \
+ && update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX \
+ && gem install --no-document bundler \
+ && rm -rf /var/lib/apt/lists/* # 20140918
 
-ADD assets/setup/ /redmine/setup/
-RUN chmod 755 /redmine/setup/install
-RUN /redmine/setup/install
-RUN /redmine/setup/email-subjects-patch
+ADD assets/setup/ /app/setup/
+RUN chmod 755 /app/setup/install
+RUN /app/setup/install
+RUN /app/setup/email-subjects-patch
 
-ADD assets/config/ /redmine/setup/config/
-ADD assets/init /redmine/init
-RUN chmod 755 /redmine/init
+ADD assets/config/ /app/setup/config/
+ADD assets/init /app/init
+RUN chmod 755 /app/init
 
 EXPOSE 80
-VOLUME ["/redmine/files"]
-ENTRYPOINT ["/redmine/init"]
+EXPOSE 443
+
+VOLUME ["/home/redmine/data"]
+
+ENTRYPOINT ["/app/init"]
 CMD ["app:start"]

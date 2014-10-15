@@ -2,19 +2,38 @@
 set -e
 
 REDMINE_VERSION=2.5.2
+INSTALL_DIR="/home/redmine/redmine"
+DATA_DIR="/home/redmine/data"
 
-mkdir -p /redmine
-cd /redmine
+SETUP_DIR="/app/setup"
+GEM_CACHE_DIR="${SETUP_DIR}/cache"
+
+# rebuild apt cache
+apt-get update
+
+# install build dependencies
+apt-get install -y libcurl4-openssl-dev libssl-dev libmagickcore-dev libmagickwand-dev \
+  libmysqlclient-dev libpq-dev libxslt1-dev libffi-dev libyaml-dev zlib1g-dev
+
+# add redmine user
+adduser --disabled-login --gecos 'Redmine' redmine
+passwd -d redmine
+
+# create the data store
+sudo -u redmine -H mkdir -p /home/redmine/data
 
 # install redmine, use local copy if available
-if [ -f /redmine/setup/redmine-${REDMINE_VERSION}.tar.gz ]; then
-  tar -zvxf /redmine/setup/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C /redmine
+mkdir -p ${INSTALL_DIR}
+if [ -f ${SETUP_DIR}/redmine-${REDMINE_VERSION}.tar.gz ]; then
+  tar -zvxf ${SETUP_DIR}/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C ${INSTALL_DIR}
 else
-  wget "http://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz" -O - | tar -zvxf - --strip=1 -C /redmine
+  wget -nv "http://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz" -O - | tar -zvxf - --strip=1 -C ${INSTALL_DIR}
 fi
 
+cd ${INSTALL_DIR}
+
 # create version file
-echo "${REDMINE_VERSION}" > /redmine/VERSION
+echo "${REDMINE_VERSION}" > ${INSTALL_DIR}/VERSION
 
 # add support for mysql and postgresql databases
 echo 'gem "mysql2", "~> 0.3.11"' >> Gemfile
@@ -30,32 +49,44 @@ echo 'gem "fastercsv", "~> 1.5.0"' >> Gemfile
 echo 'gem "yard"' >> Gemfile
 
 # install gems, use cache if available
-if [ -d "/redmine/setup/cache" ]; then
-  mv /redmine/setup/cache vendor/
+if [ -d "${GEM_CACHE_DIR}" ]; then
+  mv ${GEM_CACHE_DIR} vendor/
 fi
-bundle install --without development tests
+bundle install --without development tests --path vendor/bundle
 
 # some gems complain about missing database.yml, shut them up!
 cp config/database.yml.example config/database.yml
 
-# install themes
-. /redmine/setup/themes/install
-
-# install plugins
-. /redmine/setup/plugins/install
-
 # finalize redmine installation
-mkdir -p tmp tmp/pdf public/plugin_assets tmp/pids/ tmp/sockets/
-chmod -R u+rwX files log tmp
-chown -R www-data:www-data /redmine
+mkdir -p tmp tmp/pdf tmp/pids/ tmp/sockets/
 
-# disable default nginx configuration and enable redmine nginx configuration
+# create link public/plugin_assets directory
+rm -rf public/plugin_assets
+ln -sf ${DATA_DIR}/tmp/plugin_assets public/plugin_assets
+
+# create link tmp/thumbnails directory
+rm -rf tmp/thumbnails
+ln -sf ${DATA_DIR}/tmp/thumbnails tmp/thumbnails
+
+# create link to tmp/secret_token.rb
+ln -sf ${DATA_DIR}/tmp/secret_token.rb config/initializers/secret_token.rb
+
+# create production log
+sudo -u redmine -H touch log/production.log
+
+# fix permissions
+chmod -R u+rwX files log tmp
+chown -R redmine:redmine ${INSTALL_DIR}
+
+# disable default nginx configuration
 rm -f /etc/nginx/sites-enabled/default
-ln -s /etc/nginx/sites-available/redmine /etc/nginx/sites-enabled/redmine
+
+# run nginx as redmine user
+sed 's/user www-data/user redmine/' -i /etc/nginx/nginx.conf
 
 # setup log rotation for redmine
 cat > /etc/logrotate.d/redmine <<EOF
-/redmine/log/*.log {
+${INSTALL_DIR}/log/*.log {
     weekly
     missingok
     rotate 52
@@ -66,15 +97,27 @@ cat > /etc/logrotate.d/redmine <<EOF
 }
 EOF
 
+# configure supervisord log rotation
+cat > /etc/logrotate.d/supervisord <<EOF
+/var/log/supervisor/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
 # configure supervisord to start nginx
-echo "daemon off;" >> /etc/nginx/nginx.conf
 cat > /etc/supervisor/conf.d/nginx.conf <<EOF
 [program:nginx]
 priority=20
 directory=/tmp
-command=/usr/sbin/nginx
+command=/usr/sbin/nginx -g "daemon off;"
 user=root
-autostart=false
+autostart=true
 autorestart=true
 stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
@@ -84,36 +127,34 @@ EOF
 cat > /etc/supervisor/conf.d/unicorn.conf <<EOF
 [program:unicorn]
 priority=20
-directory=/redmine
-command=bundle exec unicorn_rails -E production -c /redmine/config/unicorn.rb
+directory=${INSTALL_DIR}
+environment=HOME=/home/redmine
+command=bundle exec unicorn_rails -E production -c ${INSTALL_DIR}/config/unicorn.rb
+user=redmine
+autostart=true
+autorestart=true
+stopsignal=QUIT
+stdout_logfile=/var/log/supervisor/%(program_name)s.log
+stderr_logfile=/var/log/supervisor/%(program_name)s.log
+EOF
+
+# configure supervisord to start crond
+cat > /etc/supervisor/conf.d/cron.conf <<EOF
+[program:cron]
+priority=20
+directory=/tmp
+command=/usr/sbin/cron -f
 user=root
-autostart=false
+autostart=true
 autorestart=true
 stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 EOF
 
-# supervise mysql server start (manual)
-cat > /etc/supervisor/conf.d/mysqld.conf <<EOF
-[program:mysqld]
-priority=20
-directory=/tmp
-command=/usr/bin/mysqld_safe
-user=root
-autostart=false
-autorestart=true
-stdout_logfile=/var/log/supervisor/%(program_name)s.log
-stderr_logfile=/var/log/supervisor/%(program_name)s.log
-EOF
+# purge build dependencies
+apt-get purge -y --auto-remove \
+  libcurl4-openssl-dev libssl-dev libmagickcore-dev libmagickwand-dev \
+  libmysqlclient-dev libpq-dev libxslt1-dev libffi-dev libyaml-dev zlib1g-dev
 
-cat > /etc/supervisor/conf.d/memcached.conf <<EOF
-[program:memcached]
-priority=20
-directory=/tmp
-command=/usr/bin/memcached -m {{MEMCACHED_SIZE}}
-user=www-data
-autostart=false
-autorestart=true
-stdout_logfile=/var/log/supervisor/%(program_name)s.log
-stderr_logfile=/var/log/supervisor/%(program_name)s.log
-EOF
+# cleanup
+rm -rf /var/lib/apt/lists/* # 20140918

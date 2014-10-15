@@ -1,6 +1,42 @@
 # Changelog
 
 **latest**
+- autostart all daemons when supervisord is started
+- removed internal mysql server
+- added support for fetching `DB_NAME`, `DB_USER` and `DB_PASS` from the postgresql linkage
+- added support for fetching `DB_NAME`, `DB_USER` and `DB_PASS` from the mysql linkage
+- keep development and build packages
+
+**2.5.2-3**
+- upgrade to sameersbn/debian:jessie.20141001
+- added REDMINE_HTTPS_HSTS_ENABLED configuration option (advanced config)
+- added REDMINE_HTTPS_HSTS_MAX_AGE configuration option (advanced config)
+- shutdown container gracefully
+- use sameersbn/debian:jessie.20140918 base image
+- added REDMINE_FETCH_COMMITS configuration option
+- added support for external/linked memcached servers
+- removed internal memcached server
+- run a daily cron job to fetch commits
+- fix: run nginx workers as redmine user
+
+**2.5.2-2**
+- added system for users to install themes
+- removed pre-installed themes
+- added system for users to install plugins
+- removed app:db:migrate command
+- removed pre-installed plugins
+
+**2.5.2-1**
+- added app:rake command to execute rake commands
+- added REDMINE_PORT configuration option
+- enabled SPDY support
+- added NGINX_X_FORWARDED_PROTO configuration option
+- added REDMINE_HTTPS and associated configuration options
+- upgrade to nginx-1.6.x series from the nginx/stable ppa
+- update to sameersbn/ubuntu:14.04.20140628 image
+- added new SMTP_ENABLED configuration option. Fixes #30
+- moved data volume path to /home/redmine/data
+- added REDMINE_RELATIVE_URL_ROOT configuration option (thanks to @k-kagurazaka)
 - update to the sameersbn/ubuntu:12.04.20140812 baseimage
 - automatically migrate the database when the redmine version changes
 

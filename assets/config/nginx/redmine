@@ -1,24 +1,24 @@
-# GCOSIGN
+# Redmine
 # Maintainer: @sameersbn
 
 upstream redmine {
-  server unix:/redmine/tmp/sockets/redmine.socket fail_timeout=0;
+  server unix:{{INSTALL_DIR}}/tmp/sockets/redmine.socket fail_timeout=0;
 }
 
 server {
   listen *:80 default_server;
   server_tokens off;
-  root /redmine/public;
+  root {{INSTALL_DIR}}/public;
 
   # Increase this if you want to upload large attachments
-  # Or if you want to accept large git objects over http
   client_max_body_size {{NGINX_MAX_UPLOAD_SIZE}};
 
   # individual nginx logs for this redmine vhost
   access_log  /var/log/nginx/redmine_access.log;
   error_log   /var/log/nginx/redmine_error.log;
 
-  location / {
+  location {{REDMINE_RELATIVE_URL_ROOT}} {
+    # alias {{INSTALL_DIR}}/public;
     # serve static files from defined root folder;.
     # @redmine is a named location for the upstream fallback, see below
     try_files $uri $uri/index.html $uri.html @redmine;
@@ -29,12 +29,13 @@ server {
   location @redmine {
     proxy_read_timeout 300;
     proxy_connect_timeout 300;
-    proxy_redirect off;
+    proxy_redirect     off;
 
-    proxy_set_header   X-Forwarded-Proto $scheme;
+    proxy_set_header   X-Forwarded-Proto {{NGINX_X_FORWARDED_PROTO}};
     proxy_set_header   Host              $http_host;
     proxy_set_header   X-Real-IP         $remote_addr;
     proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header   X-Frame-Options   SAMEORIGIN;
 
     proxy_pass http://redmine;
   }

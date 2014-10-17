@@ -4,4 +4,4 @@ set -e
 sed -i \
   '/^[ \t]*:subject => "\[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}\]/s/(#{issue.status.name}) //g
   /^[ \t]*s << "(#{issue.status.name}) " if journal.new_value_for(.status_id.)/d ' \
-    /redmine/app/models/mailer.rb
+    /home/redmine/redmine/app/models/mailer.rb

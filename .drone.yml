@@ -1,0 +1,15 @@
+image: python2.7
+
+publish:
+  docker:
+    docker_server: {{docker_server}}
+    docker_port: {{docker_port}}
+    docker_version: {{docker_version}}
+    registry_login: {{registry_login}}
+    registry_login_url: {{registry_login_url}}
+    username: {{username}}
+    password: {{password}}
+    email: {{email}}
+    image_name: {{image_name}}
+    push_latest: {{push_latest}}
+    keep_builds: {{keep_builds}}

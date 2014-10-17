@@ -6,7 +6,7 @@ publish:
     docker_port: $$docker_port
     docker_version: $$docker_version
     registry_login: $$registry_login
-    registry_login_url: $$registry_login_url
+    registry_login_url: $$registry_loginurl
     username: $$username
     password: $$password
     email: $$email

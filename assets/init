@@ -26,6 +26,7 @@ SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
 SMTP_PORT=${SMTP_PORT:-587}
 SMTP_USER=${SMTP_USER:-}
 SMTP_PASS=${SMTP_PASS:-}
+SMTP_OPENSSL_VERIFY_MODE=${SMTP_OPENSSL_VERIFY_MODE:-}
 SMTP_STARTTLS=${SMTP_STARTTLS:-true}
 if [ -n "${SMTP_USER}" ]; then
   SMTP_ENABLED=${SMTP_ENABLED:-true}
@@ -39,8 +40,9 @@ REDMINE_RELATIVE_URL_ROOT=${REDMINE_RELATIVE_URL_ROOT:-}
 REDMINE_FETCH_COMMITS=${REDMINE_FETCH_COMMITS:-disable}
 
 REDMINE_HTTPS_HSTS_ENABLED=${REDMINE_HTTPS_HSTS_ENABLED:-true}
-REDMINE_HTTPS_HSTS_MAX_AGE=${REDMINE_HTTPS_HSTS_MAX_AGE:-31536000}
+REDMINE_HTTPS_HSTS_MAXAGE=${REDMINE_HTTPS_HSTS_MAXAGE:-31536000}
 
+NGINX_WORKERS=${NGINX_WORKERS:-1}
 NGINX_MAX_UPLOAD_SIZE=${NGINX_MAX_UPLOAD_SIZE:-20m}
 
 SSL_CERTIFICATE_PATH=${SSL_CERTIFICATE_PATH:-${SSL_CERTIFICATES_DIR}/redmine.crt}
@@ -171,6 +173,36 @@ case "${REDMINE_HTTPS}" in
     ;;
 esac
 
+# create the .ssh directory
+mkdir -p ${DATA_DIR}/dotfiles/.ssh/
+chown -R redmine:redmine ${DATA_DIR}/dotfiles/.ssh/
+
+# generate ssh keys
+if [ ! -e ${DATA_DIR}/dotfiles/.ssh/id_rsa -o ! -e ${DATA_DIR}/dotfiles/.ssh/id_rsa.pub ]; then
+  echo "Generating SSH keys..."
+  rm -rf ${DATA_DIR}/dotfiles/.ssh/id_rsa ${DATA_DIR}/dotfiles/.ssh/id_rsa.pub
+  sudo -u redmine -H ssh-keygen -t rsa -N "" -f ${DATA_DIR}/dotfiles/.ssh/id_rsa
+fi
+
+# make sure the ssh keys have the right ownership and permissions
+chmod 600 ${DATA_DIR}/dotfiles/.ssh/id_rsa ${DATA_DIR}/dotfiles/.ssh/id_rsa.pub
+chmod 700 ${DATA_DIR}/dotfiles/.ssh
+
+# create the .subversion directory
+mkdir -p ${DATA_DIR}/dotfiles/.subversion/
+
+# fix ownership of the ${DATA_DIR}dotfiles/ directory
+chown -R redmine:redmine ${DATA_DIR}/dotfiles
+
+# fix ownership of ${DATA_DIR}/tmp/
+mkdir -p ${DATA_DIR}/tmp/
+chown -R redmine:redmine ${DATA_DIR}/tmp/
+
+# populate /var/log/redmine
+mkdir -m 0755 -p /var/log/redmine/supervisor  && chown -R root:root /var/log/redmine/supervisor
+mkdir -m 0755 -p /var/log/redmine/nginx       && chown -R redmine:redmine /var/log/redmine/nginx
+mkdir -m 0755 -p /var/log/redmine/redmine     && chown -R redmine:redmine /var/log/redmine/redmine
+
 # fix permission and ownership of ${DATA_DIR}
 chmod 755 ${DATA_DIR}
 chown redmine:redmine ${DATA_DIR}
@@ -247,6 +279,7 @@ if [ "${MEMCACHE_ENABLED}" == "true" ]; then
 fi
 
 # configure nginx
+sed 's/worker_processes .*/worker_processes '"${NGINX_WORKERS}"';/' -i /etc/nginx/nginx.conf
 sed 's,{{INSTALL_DIR}},'"${INSTALL_DIR}"',g' -i /etc/nginx/sites-enabled/redmine
 sed 's/{{REDMINE_PORT}}/'"${REDMINE_PORT}"'/' -i /etc/nginx/sites-enabled/redmine
 sed 's/{{NGINX_MAX_UPLOAD_SIZE}}/'"${NGINX_MAX_UPLOAD_SIZE}"'/' -i /etc/nginx/sites-enabled/redmine
@@ -258,13 +291,13 @@ sed 's,{{SSL_KEY_PATH}},'"${SSL_KEY_PATH}"',' -i /etc/nginx/sites-enabled/redmin
 if [ -r "${SSL_DHPARAM_PATH}" ]; then
   sed 's,{{SSL_DHPARAM_PATH}},'"${SSL_DHPARAM_PATH}"',' -i /etc/nginx/sites-enabled/redmine
 else
-  sed '/ssl_dhparam: {{SSL_DHPARAM_PATH}};/d' -i /etc/nginx/sites-enabled/redmine
+  sed '/ssl_dhparam {{SSL_DHPARAM_PATH}};/d' -i /etc/nginx/sites-enabled/redmine
 fi
 
 if [ "${REDMINE_HTTPS_HSTS_ENABLED}" == "true" ]; then
-  sed 's/{{REDMINE_HTTPS_HSTS_MAX_AGE}}/'"${REDMINE_HTTPS_HSTS_MAX_AGE}"'/' -i /etc/nginx/sites-enabled/redmine
+  sed 's/{{REDMINE_HTTPS_HSTS_MAXAGE}}/'"${REDMINE_HTTPS_HSTS_MAXAGE}"'/' -i /etc/nginx/sites-enabled/redmine
 else
-  sed '/{{REDMINE_HTTPS_HSTS_MAX_AGE}}/d' -i /etc/nginx/sites-enabled/redmine
+  sed '/{{REDMINE_HTTPS_HSTS_MAXAGE}}/d' -i /etc/nginx/sites-enabled/redmine
 fi
 
 # configure unicorn
@@ -301,6 +334,12 @@ if [ "${SMTP_ENABLED}" == "true" ]; then
   sudo -u redmine -H sed 's/{{SMTP_DOMAIN}}/'"${SMTP_DOMAIN}"'/' -i config/initializers/smtp_settings.rb
   sudo -u redmine -H sed 's/{{SMTP_STARTTLS}}/'"${SMTP_STARTTLS}"'/' -i config/initializers/smtp_settings.rb
 
+  if [ -n "${SMTP_OPENSSL_VERIFY_MODE}" ]; then
+    sudo -u redmine -H sed 's/{{SMTP_OPENSSL_VERIFY_MODE}}/'"${SMTP_OPENSSL_VERIFY_MODE}"'/' -i config/initializers/smtp_settings.rb
+  else
+    sudo -u redmine -H sed '/{{SMTP_OPENSSL_VERIFY_MODE}}/d' -i config/initializers/smtp_settings.rb
+  fi
+
   case "${SMTP_AUTHENTICATION}" in
     "") sudo -u redmine -H sed '/{{SMTP_AUTHENTICATION}}/d' -i config/initializers/smtp_settings.rb ;;
     *) sudo -u redmine -H sed 's/{{SMTP_AUTHENTICATION}}/'"${SMTP_AUTHENTICATION}"'/' -i config/initializers/smtp_settings.rb ;;
@@ -331,11 +370,11 @@ fi
 # for the database server to come online.
 case "${DB_TYPE}" in
   mysql)
-    prog="mysqladmin -h ${DB_HOST} -u ${DB_USER} ${DB_PASS:+-p$DB_PASS} status"
+    prog="mysqladmin -h ${DB_HOST} -P ${DB_PORT} -u ${DB_USER} ${DB_PASS:+-p$DB_PASS} status"
     ;;
   postgres)
     prog=$(find /usr/lib/postgresql/ -name pg_isready)
-    prog="${prog} -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -t 1"
+    prog="${prog} -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -t 1"
     ;;
 esac
 timeout=60
@@ -343,7 +382,7 @@ while ! ${prog} >/dev/null 2>&1
 do
   timeout=$(expr $timeout - 1)
   if [ $timeout -eq 0 ]; then
-    echo "Could not connect to mysql server. Aborting..."
+    echo "Could not connect to database server. Aborting..."
     exit 1
   fi
   echo "Waiting for database server to accept connections..."
@@ -388,8 +427,9 @@ fi
 # create a cronjob to periodically fetch commits
 case "${REDMINE_FETCH_COMMITS}" in
   hourly|daily|monthly)
-    echo "@${REDMINE_FETCH_COMMITS} cd /home/redmine/redmine && ./script/rails runner \"Repository.fetch_changesets\" -e production >> log/cron_rake.log 2>&1" >/tmp/cron.redmine
-    crontab -u redmine /tmp/cron.redmine 2>/dev/null
+    crontab -u redmine -l >/tmp/cron.redmine
+    echo "@${REDMINE_FETCH_COMMITS} cd /home/redmine/redmine && ./script/rails runner \"Repository.fetch_changesets\" -e production >> log/cron_rake.log 2>&1" >>/tmp/cron.redmine
+    crontab -u redmine /tmp/cron.redmine
     rm -rf /tmp/cron.redmine
     ;;
 esac
@@ -435,9 +475,6 @@ if [ -d ${DATA_DIR}/themes ]; then
   echo "Installing themes..."
   rsync -avq --chown=redmine:redmine ${DATA_DIR}/themes/ ${INSTALL_DIR}/public/themes/
 fi
-
-# fix ownership of ${DATA_DIR}/tmp/
-chown -R redmine:redmine ${DATA_DIR}/tmp/
 
 appStart () {
   # remove stale unicorn pid if it exists.

@@ -1,6 +1,18 @@
 # Changelog
 
 **latest**
+- added `NGINX_WORKERS` configuration option
+
+**2.6.0-1**
+- fix: create the `${DATA_DIR}/tmp/` directory at startup
+
+**2.6.0**
+- redmine: upgrade to v.2.6.0
+
+**2.5.3**
+- redmine: upgrade to v.2.5.3
+- added SMTP_OPENSSL_VERIFY_MODE configuration option
+- feature: redmine logs volume
 - autostart all daemons when supervisord is started
 - removed internal mysql server
 - added support for fetching `DB_NAME`, `DB_USER` and `DB_PASS` from the postgresql linkage
@@ -10,7 +22,7 @@
 **2.5.2-3**
 - upgrade to sameersbn/debian:jessie.20141001
 - added REDMINE_HTTPS_HSTS_ENABLED configuration option (advanced config)
-- added REDMINE_HTTPS_HSTS_MAX_AGE configuration option (advanced config)
+- added REDMINE_HTTPS_HSTS_MAXAGE configuration option (advanced config)
 - shutdown container gracefully
 - use sameersbn/debian:jessie.20140918 base image
 - added REDMINE_FETCH_COMMITS configuration option

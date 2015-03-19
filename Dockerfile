@@ -25,8 +25,7 @@ RUN /app/setup/email-subjects-patch
 ADD assets/config/ /app/setup/config/
 ADD assets/init /app/init
 RUN chmod 755 /app/init
-
-RUN /app/setup/install-plugins
+ADD assets/plugins/ /app/plugins/
 
 EXPOSE 80
 EXPOSE 443

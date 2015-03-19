@@ -11,6 +11,10 @@ SETUP_DIR="/app/setup"
 SYSCONF_TEMPLATES_DIR="${SETUP_DIR}/config"
 USERCONF_TEMPLATES_DIR="${DATA_DIR}/config"
 
+if [ -f "${REDMINE_CFGFILE}" ]; then
+    source ${REDMINE_CFGFILE}
+fi
+
 DB_HOST=${DB_HOST:-}
 DB_PORT=${DB_PORT:-}
 DB_NAME=${DB_NAME:-}
@@ -469,6 +473,20 @@ esac
 rm -rf vendor/bundle Gemfile.lock
 ln -sf ${DATA_DIR}/tmp/bundle vendor/bundle
 ln -sf ${DATA_DIR}/tmp/Gemfile.lock Gemfile.lock
+
+# if we have plugins bundled in the image, move them to
+# the appropiate directory so the script installs it.
+
+if [ `find /app/plugins/ -maxdepth 1 -type d | wc -l` -gt 1 ]; then
+  mkdir -p ${DATA_DIR}/plugins
+
+  # NOTE: Used this instead of a simple mv because of docker issue #4570
+  for i in /app/plugins/*; do
+      if [ -d $i ]; then
+        mv -vn $i ${DATA_DIR}/plugins/
+      fi
+  done
+fi
 
 # install user plugins
 if [ -d ${DATA_DIR}/plugins ]; then

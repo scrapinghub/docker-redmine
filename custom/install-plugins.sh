@@ -2,8 +2,6 @@
 
 set -e
 
-cd assets/plugins
-
 git_clone() {
     REPO="$1"
     VERSION_HASH="$2"
@@ -14,7 +12,7 @@ git_clone() {
     fi
 
     if [ -d $DST_DIR ]; then
-        echo "Plugin $DST_DIR already installed."
+        echo "Plugin/theme $DST_DIR already installed."
         return
     fi
 
@@ -22,6 +20,8 @@ git_clone() {
 
     bash -c "git clone $REPO $DST_DIR && cd $DST_DIR && git checkout -qf $VERSION_HASH"
 }
+
+cd assets/plugins
 
 git_clone https://github.com/scrapinghub/redmine_didyoumean c264073809d1a74f3efe0ff6fd80114f413dc822
 git_clone https://github.com/credativUK/redmine_image_clipboard_paste 1bb13068433706b603a7a7302c0182f78c3d34c3
@@ -36,3 +36,17 @@ if [ -n "$*" ]; then
         curl -s $d > $TMPFILE && unzip -n $TMPFILE && rm $TMPFILE
     done
 fi
+
+cd ../../assets/themes
+
+for i in \
+    https://github.com/lqez/redmine-theme-basecamp-with-icon     \
+    https://github.com/Froiden/fedmine                           \
+    https://github.com/pixel-cookers/redmine-theme               \
+    https://github.com/AlphaNodes/bavarian_dawn                  \
+    https://github.com/makotokw/redmine-theme-gitmike            \
+    https://github.com/astout/metro_redmine                      \
+    https://github.com/rubo77/freifunk-red-andy
+do 
+  git_clone $i
+done

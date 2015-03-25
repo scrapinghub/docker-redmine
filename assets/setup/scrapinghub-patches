@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+
+# This patch removes the status from the subject of the emails
+# to allow gmail group the emails from a same ticket.
+# References:
+# http://www.redmine.org/issues/3660
+# http://www.redmine.org/issues/13111
+
+sed -i \
+  '/^[ \t]*:subject => "\[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}\]/s/(#{issue.status.name}) //g
+  /^[ \t]*s << "(#{issue.status.name}) " if journal.new_value_for(.status_id.)/d ' \
+    /home/redmine/redmine/app/models/mailer.rb
+
+# This patch replaces usage of SSL by StartTLS, references:
+# https://www.redmine.org/issues/3358#note-45
+# http://www.redmine.org/projects/redmine/repository/entry/branches/2.6-stable/app/models/auth_source_ldap.rb#L135
+
+sed -i "/[ \t]*:encryption => (self.tls ? :simple_tls : nil)/s/simple_tls/start_tls/" \
+    /home/redmine/redmine/app/models/auth_source_ldap.rb

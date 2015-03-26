@@ -20,11 +20,13 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv C3173AA6 \
 ADD assets/setup/ /app/setup/
 RUN chmod 755 /app/setup/install
 RUN /app/setup/install
-RUN /app/setup/email-subjects-patch
+RUN /app/setup/scrapinghub-patches
 
 ADD assets/config/ /app/setup/config/
 ADD assets/init /app/init
 RUN chmod 755 /app/init
+ADD assets/plugins/ /app/plugins/
+ADD assets/themes/ /app/themes/
 
 EXPOSE 80
 EXPOSE 443

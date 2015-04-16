@@ -29,6 +29,9 @@ git_clone https://github.com/arkhitech/redmine_mentions 2f3122a9c81a24f4a47e34b7
 git_clone https://github.com/sciyoshi/redmine-slack 6129dd0004f38e3263b15431e5b6c2786aff876f redmine_slack
 git_clone https://github.com/redcloak/redmine_s3 a3c98ae3373f5e139b92ffebed082634cc9bfe82
 
+git_clone https://github.com/a-ono/redmine_per_project_formatting ced76f76ee59b17e951c35616d96e84552fd8028
+git_clone https://github.com/koppen/redmine_github_hook a0f2d924dac4c0d68b68eda774f732c45133a646
+
 if [ -n "$*" ]; then
     for d in $*; do
         echo "Installing $d ..."

@@ -1,6 +1,5 @@
 image: bradrydzewski/python:2.7-scrapinghub
 
-
 script:
     - sudo custom/install-plugins.sh $$ADDITIONAL_DOWNLOADS
 
@@ -9,3 +8,11 @@ publish:
     docker_host: $DOCKER_HOST
     image_name: i.scrapinghub.com/redmine/$CI_BRANCH
     keep_build: true
+
+notify:
+  slack:
+    webhook_url: '$$SLACK_WEBHOOK_URL'
+    channel: '#builds'
+    on_started: true
+    on_success: true
+    on_failure: true

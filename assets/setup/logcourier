@@ -1,0 +1,52 @@
+#/bin/sh
+#
+# Install and configure log-courier
+
+mkdir -p /usr/local/bin /etc/log-courier /var/lib/log-courier
+
+cd /usr/local/bin
+wget -O - https://s3.amazonaws.com/ops.scrapinghub.com/bin/log-courier.tgz | tar xvz
+
+cat <<! > /etc/log-courier/main.cfg
+{
+  "general": {
+    "persist directory": "/var/lib/log-courier",
+    "admin enabled": true
+  },
+  "network": {
+    "transport": "tcp",
+    "servers": [
+      "172.17.42.1:5044"
+    ]
+  },
+  "includes": [ "/etc/log-courier/*.json" ]
+}
+!
+
+cat <<! > /etc/log-courier/redmine.json
+[
+  {
+    "paths": ["/var/log/redmine/redmine/production.log"],
+    "codec": {
+      "name": "multiline",
+      "pattern": "^Started",
+      "negate": true,
+      "what": "previous",
+      "previous timeout": "5s"
+    },
+    "fields": { "type": "redmine" }
+  }
+]
+!
+
+cat <<! > /etc/supervisor/conf.d/log-courier.conf
+[program:log-courier]
+priority=40
+directory=/etc/log-courier
+command=/usr/local/bin/log-courier -config /etc/log-courier/main.cfg
+user=root
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/redmine/supervisor/%(program_name)s.log
+stderr_logfile=/var/log/redmine/supervisor/%(program_name)s.log
+!

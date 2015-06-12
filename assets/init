@@ -23,6 +23,11 @@ DB_PASS=${DB_PASS:-}
 DB_POOL=${DB_POOL:-5}
 DB_TYPE=${DB_TYPE:-}
 
+EMAIL_IMPORTER_INTERVAL=${EMAIL_IMPORTER_INTERVAL:-120}
+EMAIL_IMPORTER_HOSTNAME=${EMAIL_IMPORTER_HOSTNAME:-}
+EMAIL_IMPORTER_USERNAME=${EMAIL_IMPORTER_USERNAME:-}
+EMAIL_IMPORTER_PASSWORD=${EMAIL_IMPORTER_PASSWORD:-}
+
 MEMCACHED_HOST=${MEMCACHED_HOST:-}
 MEMCACHED_PORT=${MEMCACHED_PORT:-}
 
@@ -533,6 +538,16 @@ appRake () {
   sudo -u redmine -H bundle exec rake $@ RAILS_ENV=production
 }
 
+appEmailImporter () {
+  echo "Starting email importer loop.."
+  while true; do
+      echo "Importing emails.."
+      appRake redmine:email:receive_imap host=$EMAIL_IMPORTER_HOSTNAME username=$EMAIL_IMPORTER_USERNAME password=$EMAIL_IMPORTER_PASSWORD
+      echo "Sleeping $EMAIL_IMPORTER_INTERVAL seconds."
+      sleep $EMAIL_IMPORTER_INTERVAL
+  done
+}
+
 appHelp () {
   echo "Available options:"
   echo " app:start          - Starts the redmine server (default)"
@@ -548,6 +563,9 @@ case "$1" in
   app:rake)
     shift 1
     appRake $@
+    ;;
+  app:emailimporter)
+    appEmailImporter
     ;;
   app:help)
     appHelp

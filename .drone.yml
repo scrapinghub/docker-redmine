@@ -1,6 +1,7 @@
 image: bradrydzewski/python:2.7-scrapinghub
 
 script:
+    - git restore-mtime
     - sudo custom/install-plugins.sh $$ADDITIONAL_DOWNLOADS
 
 publish:

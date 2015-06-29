@@ -1,7 +1,7 @@
 image: bradrydzewski/python:2.7-scrapinghub
 
 script:
-    - sudo custom/install-plugins.sh $$ADDITIONAL_DOWNLOADS
+    - custom/install-plugins.sh $$ADDITIONAL_DOWNLOADS
 
 publish:
   docker:

@@ -24,9 +24,12 @@ DB_POOL=${DB_POOL:-5}
 DB_TYPE=${DB_TYPE:-}
 
 EMAIL_IMPORTER_INTERVAL=${EMAIL_IMPORTER_INTERVAL:-120}
-EMAIL_IMPORTER_HOSTNAME=${EMAIL_IMPORTER_HOSTNAME:-}
+EMAIL_IMPORTER_HOSTNAME=${EMAIL_IMPORTER_HOSTNAME:-imap.gmail.com}
 EMAIL_IMPORTER_USERNAME=${EMAIL_IMPORTER_USERNAME:-}
 EMAIL_IMPORTER_PASSWORD=${EMAIL_IMPORTER_PASSWORD:-}
+EMAIL_IMPORTER_PORT=${EMAIL_IMPORTER_PORT:-993}
+EMAIL_IMPORTER_SSL=${EMAIL_IMPORTER_SSL:-false}
+EMAIL_IMPORTER_STARTTLS=${EMAIL_IMPORTER_STARTTLS:-true}
 
 MEMCACHED_HOST=${MEMCACHED_HOST:-}
 MEMCACHED_PORT=${MEMCACHED_PORT:-}
@@ -542,7 +545,12 @@ appEmailImporter () {
   echo "Starting email importer loop.."
   while true; do
       echo "Importing emails.."
-      appRake redmine:email:receive_imap host=$EMAIL_IMPORTER_HOSTNAME username=$EMAIL_IMPORTER_USERNAME password=$EMAIL_IMPORTER_PASSWORD
+      appRake redmine:email:receive_imap host=$EMAIL_IMPORTER_HOSTNAME \
+          port=$EMAIL_IMPORTER_PORT \
+          starttls=$EMAIL_IMPORTER_STARTTLS \
+          ssl=$EMAIL_IMPORTER_SSL \
+          username=$EMAIL_IMPORTER_USERNAME \
+          password=$EMAIL_IMPORTER_PASSWORD
       echo "Sleeping $EMAIL_IMPORTER_INTERVAL seconds."
       sleep $EMAIL_IMPORTER_INTERVAL
   done
@@ -552,6 +560,7 @@ appHelp () {
   echo "Available options:"
   echo " app:start          - Starts the redmine server (default)"
   echo " app:rake <task>    - Execute a rake task."
+  echo " app:emailimporter  - Starts a loop for importing emails to redmine"
   echo " app:help           - Displays the help"
   echo " [command]          - Execute the specified linux command eg. bash."
 }

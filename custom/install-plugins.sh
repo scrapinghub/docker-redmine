@@ -40,7 +40,6 @@ git_clone https://github.com/redcloak/redmine_s3 a3c98ae3373f5e139b92ffebed08263
 git_clone https://github.com/a-ono/redmine_per_project_formatting ced76f76ee59b17e951c35616d96e84552fd8028
 git_clone https://github.com/koppen/redmine_github_hook a0f2d924dac4c0d68b68eda774f732c45133a646
 
-
 if [ -n "$*" ]; then
     for d in $*; do
         if [[ ! "$d" =~ "theme" ]]; then

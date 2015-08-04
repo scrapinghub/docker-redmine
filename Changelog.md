@@ -1,5 +1,23 @@
 # Changelog
 
+**2.6.6**
+- added `SMTP_TLS` configuration parameter
+- redmine: upgrade to v.2.6.6
+
+**2.6.5-1**
+- install: fix typo in `bundle install` command :facepalm:
+- base image update to fix SSL vulnerability
+
+**2.6.5**
+- redmine: upgrade to v.2.6.5
+
+**2.6.4**
+- redmine: upgrade to v.2.6.4
+
+**2.6.3**
+- fix: avoid duplicate cron entries for 'Repository.fetch_changesets'
+- redmine: upgrade to v.2.6.3
+
 **2.6.2**
 - update postgresql client to the latest version
 - redmine: upgrade to v.2.6.2

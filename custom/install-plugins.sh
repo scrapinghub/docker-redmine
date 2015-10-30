@@ -37,6 +37,8 @@ git_clone https://github.com/scrapinghub/redmine_mentions 19abe29da4a3c0adee2972
 git_clone https://github.com/sciyoshi/redmine-slack 6129dd0004f38e3263b15431e5b6c2786aff876f redmine_slack
 git_clone https://github.com/redcloak/redmine_s3 a3c98ae3373f5e139b92ffebed082634cc9bfe82
 
+git_clone https://github.com/scrapinghub/redmine_emojibutton 06ef4eef47eb8f2e45777d58293186382df89614
+
 git_clone https://github.com/a-ono/redmine_per_project_formatting ced76f76ee59b17e951c35616d96e84552fd8028
 git_clone https://github.com/koppen/redmine_github_hook a0f2d924dac4c0d68b68eda774f732c45133a646
 

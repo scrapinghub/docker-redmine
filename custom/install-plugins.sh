@@ -34,13 +34,13 @@ cd assets/plugins
 git_clone https://github.com/scrapinghub/redmine_didyoumean c264073809d1a74f3efe0ff6fd80114f413dc822
 # git_clone https://github.com/credativUK/redmine_image_clipboard_paste 1bb13068433706b603a7a7302c0182f78c3d34c3
 git_clone https://github.com/scrapinghub/redmine_mentions 19abe29da4a3c0adee29721035880796c3346d88
-git_clone https://github.com/sciyoshi/redmine-slack 6129dd0004f38e3263b15431e5b6c2786aff876f redmine_slack
-git_clone https://github.com/redcloak/redmine_s3 a3c98ae3373f5e139b92ffebed082634cc9bfe82
+git_clone https://github.com/sciyoshi/redmine-slack 5695cda5df9b256130a35af68a852d8563058510 redmine_slack
+git_clone https://github.com/redcloak/redmine_s3 34b8d3da8381ebba1765ed377520290c402f1095
 
 git_clone https://github.com/scrapinghub/redmine_emojibutton 06ef4eef47eb8f2e45777d58293186382df89614
 
-git_clone https://github.com/a-ono/redmine_per_project_formatting ced76f76ee59b17e951c35616d96e84552fd8028
-git_clone https://github.com/koppen/redmine_github_hook a0f2d924dac4c0d68b68eda774f732c45133a646
+git_clone https://github.com/a-ono/redmine_per_project_formatting 1c9f9efa2625af124160ce29caf1ba340869dd44
+git_clone https://github.com/koppen/redmine_github_hook 094602fac8fb3dc7a56f0d3a1993345297c97204
 
 
 if [ -n "$*" ]; then

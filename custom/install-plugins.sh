@@ -33,7 +33,10 @@ cd assets/plugins
 
 git_clone https://github.com/scrapinghub/redmine_didyoumean dc3bf214c3f5457955c668d8f8987b831441da2a
 git_clone https://github.com/scrapinghub/redmine_mentions 90a5d0e6125335fe81403d74809b4aff0652e9eb
-git_clone https://github.com/scrapinghub/redmine_emojibutton 0c224bc1dac9b6c1b07e9146dd4adfe23f3583fe
+
+# We are using 'scrapinghub' branch on this repo, so ensure to
+# get the hash from that branch.
+git_clone https://github.com/scrapinghub/redmine_emojibutton ca0afb36a0e9602b528e8e68513b5b13430939ba
 
 git_clone https://github.com/sciyoshi/redmine-slack 1c8524b58033ce35be1dcf091e22c0f5e84b9341 redmine_slack
 git_clone https://github.com/redcloak/redmine_s3 34b8d3da8381ebba1765ed377520290c402f1095

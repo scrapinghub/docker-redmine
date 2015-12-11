@@ -1,7 +1,7 @@
-FROM sameersbn/ubuntu:14.04.20150805
+FROM sameersbn/ubuntu:14.04.20151117
 MAINTAINER sameer@damagehead.com
 
-ENV REDMINE_VERSION=2.6.6 \
+ENV REDMINE_VERSION=3.2.0 \
     REDMINE_USER="redmine" \
     REDMINE_HOME="/home/redmine" \
     REDMINE_LOG_DIR="/var/log/redmine" \
@@ -20,7 +20,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E1DD270288B4E6030699E45F
  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
  && echo 'deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
  && apt-get update \
- && apt-get install -y supervisor logrotate nginx mysql-client postgresql-client \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y supervisor logrotate nginx mysql-client postgresql-client \
       imagemagick subversion git cvs bzr mercurial rsync ruby2.1 locales openssh-client \
       gcc g++ make patch pkg-config ruby2.1-dev libc6-dev zlib1g-dev libxml2-dev \
       libmysqlclient18 libpq5 libyaml-0-2 libcurl3 libssl1.0.0 \

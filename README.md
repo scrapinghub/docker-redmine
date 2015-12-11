@@ -1,3 +1,5 @@
+[![Docker Repository on Quay.io](https://quay.io/repository/sameersbn/redmine/status "Docker Repository on Quay.io")](https://quay.io/repository/sameersbn/redmine)
+
 # Table of Contents
 
 - [Introduction](#introduction)
@@ -48,7 +50,9 @@ Dockerfile to build a [Redmine](http://www.redmine.org/) container image.
 
 ## Version
 
-Current Version: **2.6.6-1**
+Current Version: **3.1.1-3**
+
+*P.S.: If your installation depends on various third party plugins, please stick with 2.6.xx series to avoid breakage.*
 
 # Contributing
 
@@ -64,15 +68,10 @@ Docker is a relatively new project and is active being developed and tested by a
 
 Given the nature of the development and release cycle it is very important that you have the latest version of docker installed because any issue that you encounter might have already been fixed with a newer docker release.
 
-For ubuntu users I suggest [installing docker](https://docs.docker.com/installation/ubuntulinux/) using docker's own package repository since the version of docker packaged in the ubuntu repositories are a little dated.
-
-Here is the shortform of the installation of an updated version of docker on ubuntu.
+Install the most recent version of the Docker Engine for your platform using the [official Docker releases](http://docs.docker.com/engine/installation/), which can also be installed using:
 
 ```bash
-sudo apt-get purge docker.io
-curl -s https://get.docker.io/ubuntu/ | sudo sh
-sudo apt-get update
-sudo apt-get install lxc-docker
+wget -qO- https://get.docker.com/ | sh
 ```
 
 Fedora and RHEL/CentOS users should try disabling selinux with `setenforce 0` and check if resolves the issue. If it does than there is not much that I can help you with. You can either stick with selinux disabled (not recommended by redhat) or switch to using ubuntu.
@@ -88,7 +87,9 @@ In your issue report please make sure you provide the following information:
 
 # Installation
 
-Pull the image from the docker index. This is the recommended method of installation as it is easier to update image in the future. These builds are performed by the Trusted Build service.
+Automated builds of the image are available on [Dockerhub](https://hub.docker.com/r/sameersbn/redmine) and is the recommended method of installation.
+
+> **Note**: Builds are also available on [Quay.io](https://quay.io/repository/sameersbn/redmine)
 
 ```bash
 docker pull sameersbn/redmine:latest
@@ -97,15 +98,13 @@ docker pull sameersbn/redmine:latest
 Since version `2.4.2`, the image builds are being tagged. You can now pull a particular version of redmine by specifying the version number. For example,
 
 ```bash
-docker pull sameersbn/redmine:2.6.6-1
+docker pull sameersbn/redmine:3.2.0
 ```
 
 Alternately you can build the image yourself.
 
 ```bash
-git clone https://github.com/sameersbn/docker-redmine.git
-cd docker-redmine
-docker build --tag="$USER/redmine" .
+docker build -t sameersbn/redmine github.com/sameersbn/docker-redmine
 ```
 
 # Quick Start
@@ -113,7 +112,7 @@ docker build --tag="$USER/redmine" .
 The quickest way to get started is using [docker-compose](https://docs.docker.com/compose/).
 
 ```bash
-wget https://raw.githubusercontent.com/sameersbn/docker-redmine/2.6-stable/docker-compose.yml
+wget https://raw.githubusercontent.com/sameersbn/docker-redmine/master/docker-compose.yml
 docker-compose up
 ```
 
@@ -126,7 +125,7 @@ docker run --name=postgresql-redmine -d \
   --env='DB_NAME=redmine_production' \
   --env='DB_USER=redmine' --env='DB_PASS=password' \
   --volume=/srv/docker/redmine/postgresql:/var/lib/postgresql \
-  sameersbn/postgresql:9.4
+  sameersbn/postgresql:9.4-10
 ```
 
 Step 2. Launch the redmine container
@@ -136,7 +135,7 @@ docker run --name=redmine -d \
   --link=postgresql-redmine:postgresql --publish=10083:80 \
   --env='REDMINE_PORT=10083' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 **NOTE**: Please allow a minute or two for the Redmine application to start.
@@ -181,7 +180,7 @@ Volumes can be mounted in docker by specifying the **'-v'** option in the docker
 ```bash
 docker run --name=redmine -it --rm \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 ## Database
@@ -230,7 +229,7 @@ docker run --name=redmine -it --rm \
   --env='DB_HOST=192.168.1.100' --env='DB_NAME=redmine_production' \
   --env='DB_USER=redmine' --env='DB_PASS=password' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 This will initialize the redmine database and after a couple of minutes your redmine instance should be ready to use.
@@ -275,15 +274,15 @@ We are now ready to start the redmine application.
 ```bash
 docker run --name=redmine -it --rm --link=mysql-redmine:mysql \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 Here the image will also automatically fetch the `DB_NAME`, `DB_USER` and `DB_PASS` variables from the mysql container as they are specified in the `docker run` command for the mysql container. This is made possible using the magic of docker links and works with the following images:
 
- - [mysql](https://registry.hub.docker.com/_/mysql/)
- - [sameersbn/mysql](https://registry.hub.docker.com/u/sameersbn/mysql/)
- - [centurylink/mysql](https://registry.hub.docker.com/u/centurylink/mysql/)
- - [orchardup/mysql](https://registry.hub.docker.com/u/orchardup/mysql/)
+ - [mysql](https://hub.docker.com/_/mysql/)
+ - [sameersbn/mysql](https://quay.io/repository/sameersbn/mysql/)
+ - [centurylink/mysql](https://hub.docker.com/r/centurylink/mysql/)
+ - [orchardup/mysql](https://hub.docker.com/r/orchardup/mysql/)
 
 ### PostgreSQL
 
@@ -305,7 +304,7 @@ docker run --name=redmine -it --rm \
   --env='DB_HOST=192.168.1.100' --env='DB_NAME=redmine_production' \
   --env='DB_USER=redmine' --env='DB_PASS=password' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 This will initialize the redmine database and after a couple of minutes your redmine instance should be ready to use.
@@ -321,7 +320,7 @@ To illustrate linking with a postgresql container, we will use the [sameersbn/po
 First, lets pull the postgresql image from the docker index.
 
 ```bash
-docker pull sameersbn/postgresql:9.4
+docker pull sameersbn/postgresql:9.4-10
 ```
 
 For data persistence lets create a store for the postgresql and start the container.
@@ -340,7 +339,7 @@ docker run --name=postgresql-redmine -d \
   --env='DB_NAME=redmine_production' \
   --env='DB_USER=redmine' --env='DB_PASS=password' \
   --volume=/srv/docker/redmine/postgresql:/var/lib/postgresql \
-  sameersbn/postgresql:9.4
+  sameersbn/postgresql:9.4-10
 ```
 
 The above command will create a database named `redmine_production` and also create a user named `redmine` with the password `password` with access to the `redmine_production` database.
@@ -350,15 +349,15 @@ We are now ready to start the redmine application.
 ```bash
 docker run --name=redmine -it --rm --link=postgresql-redmine:postgresql \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 Here the image will also automatically fetch the `DB_NAME`, `DB_USER` and `DB_PASS` variables from the postgresql container as they are specified in the `docker run` command for the postgresql container. This is made possible using the magic of docker links and works with the following images:
 
- - [postgres](https://registry.hub.docker.com/_/postgres/)
- - [sameersbn/postgresql](https://registry.hub.docker.com/u/sameersbn/postgresql/)
- - [orchardup/postgresql](https://registry.hub.docker.com/u/orchardup/postgresql/)
- - [paintedfox/postgresql](https://registry.hub.docker.com/u/paintedfox/postgresql/)
+ - [postgres](https://hub.docker.com/_/postgres/)
+ - [sameersbn/postgresql](https://quay.io/repository/sameersbn/postgresql/)
+ - [orchardup/postgresql](https://hub.docker.com/r/orchardup/postgresql/)
+ - [paintedfox/postgresql](https://hub.docker.com/r/paintedfox/postgresql/)
 
 ## Memcached (Optional)
 
@@ -373,7 +372,7 @@ The image can be configured to use an external memcached server. The memcached s
 ```bash
 docker run --name=redmine -it --rm \
   --env='MEMCACHE_HOST=192.168.1.100' --env='MEMCACHE_PORT=11211' \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 ### Linking to Memcached Container
@@ -392,7 +391,7 @@ Now you can link memcached to the redmine image:
 
 ```bash
 docker run --name=redmine -it --rm --link=memcached-redmine:memcached \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 ### Mail
@@ -405,14 +404,16 @@ Please refer the [Available Configuration Parameters](#available-configuration-p
 docker run --name=redmine -it --rm \
   --env='SMTP_USER=USER@gmail.com' --env='SMTP_PASS=PASSWORD' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 If you are not using google mail, then please configure the SMTP host and port using the `SMTP_HOST` and `SMTP_PORT` configuration parameters.
 
-__NOTE:__
+If you are using a google apps account with a custom domain (other than google.com), you need to set the `SMTP_DOMAIN` parameters or else you will get internal server error when doing an action that would normally send a mail.
 
-I have only tested standard gmail and google apps login. I expect that the currently provided configuration parameters should be sufficient for most users. If this is not the case, then please let me know.
+Similary you can configure receiving emails using the `IMAP_` configuration options. Please refer [Available Configuration Parameters](#available-configuration-parameters) for details. When receiving emails is enabled users can comment on issues by replying to emails.
+
+*P.S. The receiving emails feature is only available since versions `2.6.6-2`, `3.0.4-2` and `3.1.0-2`. Refer the [Changelog](Changelog.md) for details.*
 
 ### SSL
 
@@ -482,9 +483,10 @@ HTTPS support can be enabled by setting the `REDMINE_HTTPS` option to `true`.
 
 ```bash
 docker run --name=redmine -d \
-  --env='REDMINE_HTTPS=true' \
+  --publish=10083:80 --publish 10445:443 \
+  --env='REDMINE_PORT=10445' --env='REDMINE_HTTPS=true' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 In this configuration, any requests made over the plain http protocol will automatically be redirected to use the https protocol. However, this is not optimal when using a load balancer.
@@ -500,7 +502,7 @@ docker run --name=redmine -d \
   --env='REDMINE_HTTPS=true' \
   --env='REDMINE_HTTPS_HSTS_MAXAGE=2592000'
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 If you want to completely disable HSTS set `REDMINE_HTTPS_HSTS_ENABLED` to `false`.
@@ -519,7 +521,7 @@ In summation, when using a load balancer, the docker command would look for the 
 docker run --name=redmine -d --publish=10083:80 \
   --env='REDMINE_HTTPS=true' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 ### Deploy to a subdirectory (relative url root)
@@ -532,7 +534,7 @@ Let's assume we want to deploy our application to '/redmine'. Redmine needs to k
 docker run --name=redmine -d --publish=10083:80 \
   --env='REDMINE_RELATIVE_URL_ROOT=/redmine' \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 Redmine will now be accessible at the `/redmine` path, e.g. `http://www.example.com/redmine`.
@@ -548,7 +550,7 @@ Also the container processes seem to be executed as the host's user/group `1000`
 ```bash
 docker run --name=redmine -it --rm [options] \
   --env="USERMAP_UID=500" --env="USERMAP_GID=500" \
-  sameersbn/redmine:2.6.6-1
+  sameersbn/redmine:3.2.0
 ```
 
 ### Available Configuration Parameters
@@ -592,6 +594,27 @@ Below is the complete list of parameters that can be set using environment varia
 - **SMTP_STARTTLS**: Enable STARTTLS. Defaults to `true`.
 - **SMTP_TLS**: Enable SSL/TLS. Defaults to `false`.
 - **SMTP_AUTHENTICATION**: Specify the SMTP authentication method. Defaults to `:login` if `SMTP_USER` is set.
+- **SMTP_CA_ENABLED**: Enable custom CA certificates for SMTP email configuration. Defaults to `false`.
+- **SMTP_CA_PATH**: Specify the `ca_path` parameter for SMTP email configuration. Defaults to `/home/redmine/data/certs`.
+- **SMTP_CA_FILE**: Specify the `ca_file` parameter for SMTP email configuration. Defaults to `/home/redmine/data/certs/ca.crt`.
+- **IMAP_ENABLED**: Enable receiving email via IMAP. Defaults to `false`.
+- **IMAP_USER**: IMAP username. Defaults to value of `SMTP_USER`.
+- **IMAP_PASS**: IMAP password. Defaults to value of `SMTP_PASS`.
+- **IMAP_HOST**: IMAP server host. Defaults to `imap.gmail.com`.
+- **IMAP_PORT**: IMAP server port. Defaults to `993`.
+- **IMAP_SSL**: IMAP enable SSL. Defaults to `true`.
+- **IMAP_INTERVAL**: The interval in minutes between checking emails. Defaults to `30`. Values allowed in the range `1 - 60`.
+- **INCOMING_EMAIL_UNKNOWN_USER**: How to handle emails from an unknown user. Accepted values are `ignore`, `accept` and `create`. Defaults to `ignore`.
+- **INCOMING_EMAIL_NO_PERMISSION_CHECK**: Disable permission checking when receiving the email. Defaults to `false`.
+- **INCOMING_EMAIL_NO_ACCOUNT_NOTICE**: Disable new user account notification. Defaults to `true`.
+- **INCOMING_EMAIL_DEFAULT_GROUP**: Adds created user to foo and bar groups.
+- **INCOMING_EMAIL_PROJECT**: Identifier of the target project.
+- **INCOMING_EMAIL_STATUS**: Name of the target status.
+- **INCOMING_EMAIL_TRACKER**: Name of the target tracker.
+- **INCOMING_EMAIL_CATEGORY**: Name of the target category.
+- **INCOMING_EMAIL_PRIORITY**: Name of the target priority.
+- **INCOMING_EMAIL_PRIVATE**: Create new issues as private.
+- **INCOMING_EMAIL_ALLOW_OVERRIDE**: Allow email content to override attributes specified by previous options. Value is a comma separated list of attributes. See [redmine documentation](http://www.redmine.org/projects/redmine/wiki/RedmineReceivingEmails#Fetching-emails-from-an-IMAP-server) for acceptable values.
 
 # Plugins
 
@@ -618,9 +641,9 @@ For most plugins this is all you need to do. With the plugin installed you can s
 
 ***If the gem installation fails after adding a new plugin, please retry after removing the `/srv/docker/redmine/redmine/tmp` directory***
 
-Some plugins however, require you to perform additional configurations to function correctly. You can add these steps in a `init` script at the `/srv/docker/redmine/redmine/plugins` directory that will executed everytime the image is started.
+In some cases it might be necessary to install additional packages and/or perform some post installation setup for a plugin to function correctly. For such case the image allows you to install a `pre-install.sh` and `post-install.sh` script at the `/srv/docker/redmine/redmine/plugins` directory that will be executed everytime the image is started.
 
-For example, the recurring tasks plugin requires that you create a cron job to periodically execute a rake task. To achieve this, create the `/srv/docker/redmine/redmine/plugins/init` file with the following content:
+For example, the recurring tasks plugin requires that you create a cron job to periodically execute a rake task. To achieve this, create the `/srv/docker/redmine/redmine/plugins/post-install.sh` file with the following content:
 
 ```bash
 ## Recurring Tasks Configuration
@@ -640,7 +663,9 @@ rm -rf /tmp/cron.redmine
 ## End of Recurring Tasks Configuration
 ```
 
-Now whenever the image is started the above init script will be executed and the required cron job will be installed.
+Now whenever the image is started the `post-install.sh` script will be executed and the required cron job will be installed.
+
+If you need to install additional packages to satisfy a plugins dependencies then install such packages using the `pre-install.sh` script.
 
 Previously this image packaged a couple of plugins by default. Existing users would notice that those plugins are no longer available. If you want them back, follow these instructions:
 
@@ -658,7 +683,7 @@ To uninstall plugins you need to first tell redmine about the plugin you need to
 ```bash
 docker run --name=redmine -it --rm \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1 \
+  sameersbn/redmine:3.2.0 \
   app:rake redmine:plugins:migrate NAME=plugin_name VERSION=0
 ```
 
@@ -668,14 +693,14 @@ Once the rake task has been executed, the plugin should be removed from the `/sr
 rm -rf /srv/docker/redmine/redmine/plugins/plugin_name
 ```
 
-Any configuration that you may have added in the `/srv/docker/redmine/redmine/plugins/init` script for the plugin should also be removed.
+Any configuration that you may have added in the `/srv/docker/redmine/redmine/plugins/post-install.sh` script for the plugin should also be removed.
 
 For example, to remove the recurring tasks plugin:
 
 ```bash
 docker run --name=redmine -it --rm \
   --volume=/srv/docker/redmine/redmine:/home/redmine/data \
-  sameersbn/redmine:2.6.6-1 \
+  sameersbn/redmine:3.2.0 \
   app:rake redmine:plugins:migrate NAME=recurring_tasks VERSION=0
 rm -rf /srv/docker/redmine/redmine/plugins/recurring_tasks
 ```
@@ -761,7 +786,7 @@ To upgrade to newer redmine releases, simply follow this 4 step upgrade procedur
 **Step 1**: Update the docker image.
 
 ```bash
-docker pull sameersbn/redmine:2.6.6-1
+docker pull sameersbn/redmine:3.2.0
 ```
 
 **Step 2**: Stop and remove the currently running image
@@ -785,7 +810,7 @@ docker exec mysql-redmine mysqldump -h localhost --add-drop-table redmine_produc
 **Step 4**: Start the image
 
 ```bash
-docker run --name=redmine -d [OPTIONS] sameersbn/redmine:2.6.6-1
+docker run --name=redmine -d [OPTIONS] sameersbn/redmine:3.2.0
 ```
 
 **Step 5**: Restore database from before
@@ -800,7 +825,7 @@ The `app:rake` command allows you to run redmine rake tasks. To run a rake task 
 
 ```bash
 docker run --name=redmine -d [OPTIONS] \
-  sameersbn/redmine:2.6.6-1 app:rake redmine:email:test[admin]
+  sameersbn/redmine:3.2.0 app:rake redmine:email:test[admin]
 ```
 
 You can also use `docker exec` to run rake tasks on running redmine instance. For example,
@@ -813,7 +838,7 @@ Similarly, to remove uploaded files left unattached
 
 ```bash
 docker run --name=redmine -d [OPTIONS] \
-  sameersbn/redmine:2.6.6-1 app:rake redmine:attachments:prune
+  sameersbn/redmine:3.2.0 app:rake redmine:attachments:prune
 ```
 
 Or,

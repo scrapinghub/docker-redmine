@@ -1,5 +1,5 @@
 postgresql:
-  image: sameersbn/postgresql:9.4-2
+  image: sameersbn/postgresql:9.4-10
   environment:
     - DB_USER=redmine
     - DB_PASS=password
@@ -7,7 +7,7 @@ postgresql:
   volumes:
     - /srv/docker/redmine/postgresql:/var/lib/postgresql
 redmine:
-  image: sameersbn/redmine:2.6.6-1
+  image: sameersbn/redmine:3.2.0
   links:
     - postgresql:postgresql
   environment:
@@ -21,6 +21,13 @@ redmine:
     - SMTP_PASS=password
     - SMTP_STARTTLS=true
     - SMTP_AUTHENTICATION=:login
+    - IMAP_ENABLED=false
+    - IMAP_USER=mailer@example.com
+    - IMAP_PASS=password
+    - IMAP_HOST=imap.gmail.com
+    - IMAP_PORT=993
+    - IMAP_SSL=true
+    - IMAP_INTERVAL=30
   ports:
     - "10083:80"
   volumes:

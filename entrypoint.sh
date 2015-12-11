@@ -37,11 +37,34 @@ SMTP_PASS=${SMTP_PASS:-}
 SMTP_OPENSSL_VERIFY_MODE=${SMTP_OPENSSL_VERIFY_MODE:-}
 SMTP_STARTTLS=${SMTP_STARTTLS:-true}
 SMTP_TLS=${SMTP_TLS:-false}
+SMTP_CA_ENABLED=${SMTP_CA_ENABLED:-false}
+SMTP_CA_PATH=${SMTP_CA_PATH:-$REDMINE_DATA_DIR/certs}
+SMTP_CA_FILE=${SMTP_CA_FILE:-$REDMINE_DATA_DIR/certs/ca.crt}
 if [[ -n ${SMTP_USER} ]]; then
   SMTP_ENABLED=${SMTP_ENABLED:-true}
   SMTP_AUTHENTICATION=${SMTP_AUTHENTICATION:-:login}
 fi
 SMTP_ENABLED=${SMTP_ENABLED:-false}
+
+IMAP_ENABLED=${IMAP_ENABLED:-false}
+IMAP_USER=${IMAP_USER:-${SMTP_USER}}
+IMAP_PASS=${IMAP_PASS:-${SMTP_PASS}}
+IMAP_HOST=${IMAP_HOST:-imap.gmail.com}
+IMAP_PORT=${IMAP_PORT:-993}
+IMAP_SSL=${IMAP_SSL:-true}
+IMAP_INTERVAL=${IMAP_INTERVAL:-30}
+
+INCOMING_EMAIL_UNKNOWN_USER=${INCOMING_EMAIL_UNKNOWN_USER:-ignore}
+INCOMING_EMAIL_NO_PERMISSION_CHECK=${INCOMING_EMAIL_NO_PERMISSION_CHECK:-false}
+INCOMING_EMAIL_NO_ACCOUNT_NOTICE=${INCOMING_EMAIL_NO_ACCOUNT_NOTICE:-true}
+INCOMING_EMAIL_DEFAULT_GROUP=${INCOMING_EMAIL_DEFAULT_GROUP:-}
+INCOMING_EMAIL_PROJECT=${INCOMING_EMAIL_PROJECT:-}
+INCOMING_EMAIL_STATUS=${INCOMING_EMAIL_STATUS:-}
+INCOMING_EMAIL_TRACKER=${INCOMING_EMAIL_TRACKER:-}
+INCOMING_EMAIL_CATEGORY=${INCOMING_EMAIL_CATEGORY:-}
+INCOMING_EMAIL_PRIORITY=${INCOMING_EMAIL_PRIORITY:-}
+INCOMING_EMAIL_PRIVATE=${INCOMING_EMAIL_PRIVATE:-}
+INCOMING_EMAIL_ALLOW_OVERRIDE=${INCOMING_EMAIL_ALLOW_OVERRIDE:-}
 
 REDMINE_PORT=${REDMINE_PORT:-}
 REDMINE_HTTPS=${REDMINE_HTTPS:-false}
@@ -365,6 +388,18 @@ if [[ ${SMTP_ENABLED} == true ]]; then
     *) sudo -HEu ${REDMINE_USER} sed 's/{{SMTP_AUTHENTICATION}}/'"${SMTP_AUTHENTICATION}"'/' -i config/initializers/smtp_settings.rb ;;
   esac
 
+  if [[ ${SMTP_CA_ENABLED} == true ]]; then
+    if [[ -d ${SMTP_CA_PATH} ]]; then
+      sudo -HEu ${REDMINE_USER} sed 's,{{SMTP_CA_PATH}},'"${SMTP_CA_PATH}"',' -i config/initializers/smtp_settings.rb
+    fi
+
+    if [[ -f ${SMTP_CA_FILE} ]]; then
+      sudo -HEu ${REDMINE_USER} sed 's,{{SMTP_CA_FILE}},'"${SMTP_CA_FILE}"',' -i config/initializers/smtp_settings.rb
+    fi
+  else
+    sudo -HEu ${REDMINE_USER} sed '/{{SMTP_CA_PATH}}/d' -i config/initializers/smtp_settings.rb
+    sudo -HEu ${REDMINE_USER} sed '/{{SMTP_CA_FILE}}/d' -i config/initializers/smtp_settings.rb
+  fi
 fi
 
 # create file uploads directory
@@ -449,21 +484,53 @@ if [[ ${REDMINE_VERSION} != ${CURRENT_VERSION} ]]; then
   echo ${REDMINE_VERSION} | sudo -HEu ${REDMINE_USER} tee --append ${REDMINE_DATA_DIR}/tmp/VERSION >/dev/null
 fi
 
+# setup cronjobs
+crontab -u ${REDMINE_USER} -l >/tmp/cron.${REDMINE_USER}
+
 # create a cronjob to periodically fetch commits
 case ${REDMINE_FETCH_COMMITS} in
   hourly|daily|monthly)
-    crontab -u ${REDMINE_USER} -l >/tmp/cron.${REDMINE_USER}
     if ! grep -q 'Repository.fetch_changesets' /tmp/cron.${REDMINE_USER}; then
       case ${REDMINE_VERSION} in
         2.*) echo "@${REDMINE_FETCH_COMMITS} cd ${REDMINE_HOME}/redmine && ./script/rails runner \"Repository.fetch_changesets\" -e ${RAILS_ENV} >> log/cron_rake.log 2>&1" >>/tmp/cron.${REDMINE_USER} ;;
         3.*) echo "@${REDMINE_FETCH_COMMITS} cd ${REDMINE_HOME}/redmine && ./bin/rails runner \"Repository.fetch_changesets\" -e ${RAILS_ENV} >> log/cron_rake.log 2>&1" >>/tmp/cron.${REDMINE_USER} ;;
         *) echo "ERROR: Unsupported Redmine version (${REDMINE_VERSION})" && exit 1 ;;
       esac
-      crontab -u ${REDMINE_USER} /tmp/cron.${REDMINE_USER}
     fi
-    rm -rf /tmp/cron.${REDMINE_USER}
     ;;
 esac
+
+# create a cronjob for receiving emails (comments, etc.)
+if [[ ${IMAP_ENABLED} == true ]]; then
+  if ! grep -q 'redmine:email:receive_imap' /tmp/cron.${REDMINE_USER}; then
+    case ${INCOMING_EMAIL_NO_PERMISSION_CHECK} in
+      true)  INCOMING_EMAIL_NO_PERMISSION_CHECK=1 ;;
+      false) INCOMING_EMAIL_NO_PERMISSION_CHECK=0 ;;
+    esac
+
+    case ${INCOMING_EMAIL_PRIVATE} in
+      true)  INCOMING_EMAIL_PRIVATE=1 ;;
+      false) INCOMING_EMAIL_PRIVATE=0 ;;
+    esac
+
+    INCOMING_EMAIL_OPTIONS="${INCOMING_EMAIL_UNKNOWN_USER:+unknown_user=${INCOMING_EMAIL_UNKNOWN_USER}} \
+      ${INCOMING_EMAIL_NO_PERMISSION_CHECK:+no_permission_check=${INCOMING_EMAIL_NO_PERMISSION_CHECK}} \
+      ${INCOMING_EMAIL_NO_ACCOUNT_NOTICE:+no_account_notice=${INCOMING_EMAIL_NO_ACCOUNT_NOTICE}} \
+      ${INCOMING_EMAIL_DEFAULT_GROUP:+default_group=${INCOMING_EMAIL_DEFAULT_GROUP}} \
+      ${INCOMING_EMAIL_PROJECT:+project=${INCOMING_EMAIL_PROJECT}} \
+      ${INCOMING_EMAIL_STATUS:+status=${INCOMING_EMAIL_STATUS}} \
+      ${INCOMING_EMAIL_TRACKER:+tracker=${INCOMING_EMAIL_TRACKER}} \
+      ${INCOMING_EMAIL_CATEGORY:+category=${INCOMING_EMAIL_CATEGORY}} \
+      ${INCOMING_EMAIL_PRIORITY:+priority=${INCOMING_EMAIL_PRIORITY}} \
+      ${INCOMING_EMAIL_PRIVATE:+private=${INCOMING_EMAIL_PRIVATE}} \
+      ${INCOMING_EMAIL_ALLOW_OVERRIDE:+allow_override=${INCOMING_EMAIL_ALLOW_OVERRIDE}}"
+    echo "*/${IMAP_INTERVAL} * * * * cd ${REDMINE_HOME}/redmine && bundle exec rake redmine:email:receive_imap host=${IMAP_HOST} port=${IMAP_PORT} ssl=${IMAP_SSL} username=${IMAP_USER} password=${IMAP_PASS} ${INCOMING_EMAIL_OPTIONS} RAILS_ENV=${RAILS_ENV} >> log/cron_rake.log 2>&1" >>/tmp/cron.${REDMINE_USER}
+  fi
+fi
+
+# install the cronjobs
+crontab -u ${REDMINE_USER} /tmp/cron.${REDMINE_USER}
+rm -rf /tmp/cron.${REDMINE_USER}
 
 # remove vendor/bundle and symlink to ${REDMINE_DATA_DIR}/tmp/bundle
 rm -rf vendor/bundle Gemfile.lock
@@ -474,6 +541,17 @@ ln -sf ${REDMINE_DATA_DIR}/tmp/Gemfile.lock Gemfile.lock
 if [[ -d ${REDMINE_DATA_DIR}/plugins ]]; then
   echo "Installing plugins..."
   rsync -avq --chown=${REDMINE_USER}:${REDMINE_USER} ${REDMINE_DATA_DIR}/plugins/ ${REDMINE_INSTALL_DIR}/plugins/
+
+  # plugins/init script is renamed to plugins/post-install.sh
+  if [[ -f ${REDMINE_DATA_DIR}/plugins/init ]]; then
+    mv ${REDMINE_DATA_DIR}/plugins/init ${REDMINE_DATA_DIR}/plugins/post-install.sh
+  fi
+
+  # execute plugins/pre-install.sh script
+  if [[ -f ${REDMINE_DATA_DIR}/plugins/pre-install.sh ]]; then
+    echo "Executing plugins/pre-install.sh script..."
+    . ${REDMINE_DATA_DIR}/plugins/pre-install.sh
+  fi
 
   # install gems and migrate the plugins when plugins are added/removed
   CURRENT_SHA1=
@@ -494,10 +572,10 @@ if [[ -d ${REDMINE_DATA_DIR}/plugins ]]; then
     echo -n ${PLUGINS_SHA1} > ${REDMINE_DATA_DIR}/tmp/plugins.sha1
   fi
 
-  # source plugins init script
-  if [[ -f ${REDMINE_DATA_DIR}/plugins/init ]]; then
-    echo "Executing plugins startup script..."
-    . ${REDMINE_DATA_DIR}/plugins/init
+  # execute plugins post-install.sh script
+  if [[ -f ${REDMINE_DATA_DIR}/plugins/post-install.sh ]]; then
+    echo "Executing plugins/post-install.sh script..."
+    . ${REDMINE_DATA_DIR}/plugins/post-install.sh
   fi
 else
   # make sure the plugins.sha1 is not present
@@ -508,6 +586,12 @@ fi
 if [[ -d ${REDMINE_DATA_DIR}/themes ]]; then
   echo "Installing themes..."
   rsync -avq --chown=${REDMINE_USER}:${REDMINE_USER} ${REDMINE_DATA_DIR}/themes/ ${REDMINE_INSTALL_DIR}/public/themes/
+fi
+
+# execute entrypoint customization script
+if [[ -f ${REDMINE_DATA_DIR}/entrypoint.custom.sh ]]; then
+  echo "Executing entrypoint.custom.sh..."
+  . ${REDMINE_DATA_DIR}/entrypoint.custom.sh
 fi
 
 appStart () {

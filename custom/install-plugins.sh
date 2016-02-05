@@ -31,9 +31,8 @@ download_or_clone() {
 
 cd assets/plugins
 
-git_clone https://github.com/scrapinghub/redmine_didyoumean dc3bf214c3f5457955c668d8f8987b831441da2a
-# Disabled for now, incompatible with CKEditor Plugin
-# git_clone https://github.com/scrapinghub/redmine_mentions 90a5d0e6125335fe81403d74809b4aff0652e9eb
+git_clone https://github.com/scrapinghub/redmine_didyoumean b3ddd9a56c10be5a6afcb75277d52adc8e586c2b
+git_clone https://github.com/scrapinghub/redmine_mentions b32426484905b8746550c9fbc9dce23858906798
 git_clone https://github.com/a-ono/redmine_ckeditor 908e2f25fe99fba5df49e4239cb7706a3f783c24
 
 # We are using 'scrapinghub' branch on this repo, so ensure to

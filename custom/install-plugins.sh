@@ -43,9 +43,7 @@ git_clone https://github.com/sciyoshi/redmine-slack 1c8524b58033ce35be1dcf091e22
 git_clone https://github.com/redcloak/redmine_s3 34b8d3da8381ebba1765ed377520290c402f1095
 git_clone https://github.com/a-ono/redmine_per_project_formatting 1c9f9efa2625af124160ce29caf1ba340869dd44
 git_clone https://github.com/koppen/redmine_github_hook 094602fac8fb3dc7a56f0d3a1993345297c97204
-
-# Disabled for now, because is not compatible with redmine 3
-# git_clone https://github.com/credativUK/redmine_image_clipboard_paste 1bb13068433706b603a7a7302c0182f78c3d34c3
+git_clone https://github.com/scrapinghub/redmine_image_clipboard_paste a235295e32f85df8f6ce08848aa99494921af272
 
 if [ -n "$*" ]; then
     for d in $*; do

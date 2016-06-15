@@ -5,45 +5,38 @@
 mkdir -p /usr/local/bin /etc/log-courier /var/lib/log-courier
 
 cd /usr/local/bin
-wget -O - https://s3.amazonaws.com/ops.scrapinghub.com/bin/log-courier.tgz | tar xvz
+wget -O - https://s3.amazonaws.com/ops.scrapinghub.com/bin/log-courier-2.0.4.tgz | tar xvz
 
-cat <<! > /etc/log-courier/main.cfg
-{
-  "general": {
-    "persist directory": "/var/lib/log-courier",
-    "admin enabled": true
-  },
-  "network": {
-    "transport": "tcp",
-    "servers": [
-      "172.17.42.1:5044"
-    ]
-  },
-  "includes": [ "/etc/log-courier/*.json" ]
-}
-!
+cat <<! > /etc/log-courier/main.yaml
+general:
+  persist directory: /var/lib/log-courier
+admin:
+  enabled: true
+  listen address: unix:/var/run/log-courier-admin.socket
 
-cat <<! > /etc/log-courier/redmine.json
-[
-  {
-    "paths": ["/var/log/redmine/redmine/production.log"],
-    "codec": {
-      "name": "multiline",
-      "pattern": "^Started",
-      "negate": true,
-      "what": "previous",
-      "previous timeout": "5s"
-    },
-    "fields": { "type": "redmine" }
-  }
-]
+network:
+  transport: tls
+  servers:
+    - 172.17.42.1:5046
+  ssl ca: /etc/ssl/log-courier.crt
+
+files:
+  - paths:
+      - /var/log/redmine/redmine/production.log
+    fields:
+      type: redmine
+    codecs:
+      - name: multiline
+        patterns:
+          - "!^Started"
+        what: previous
 !
 
 cat <<! > /etc/supervisor/conf.d/log-courier.conf
 [program:log-courier]
 priority=40
 directory=/etc/log-courier
-command=/usr/local/bin/log-courier -config /etc/log-courier/main.cfg
+command=/usr/local/bin/log-courier -config /etc/log-courier/main.yaml
 user=root
 autostart=true
 autorestart=true

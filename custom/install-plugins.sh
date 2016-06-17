@@ -62,15 +62,3 @@ if [ -n "$*" ]; then
         fi
     done
 fi
-
-for i in \
-    https://github.com/lqez/redmine-theme-basecamp-with-icon     \
-    https://github.com/Froiden/fedmine                           \
-    https://github.com/pixel-cookers/redmine-theme               \
-    https://github.com/AlphaNodes/bavarian_dawn                  \
-    https://github.com/makotokw/redmine-theme-gitmike            \
-    https://github.com/astout/metro_redmine                      \
-    https://github.com/rubo77/freifunk-red-andy
-do 
-  git_clone $i
-done

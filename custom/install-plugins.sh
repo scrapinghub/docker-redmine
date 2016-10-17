@@ -44,6 +44,7 @@ git_clone https://github.com/redcloak/redmine_s3 34b8d3da8381ebba1765ed377520290
 git_clone https://github.com/a-ono/redmine_per_project_formatting 1c9f9efa2625af124160ce29caf1ba340869dd44
 git_clone https://github.com/koppen/redmine_github_hook 094602fac8fb3dc7a56f0d3a1993345297c97204
 git_clone https://github.com/scrapinghub/redmine_image_clipboard_paste a235295e32f85df8f6ce08848aa99494921af272
+git_clone https://github.com/speedy32129/time_logger 627f1535015e48ac29912fe0fa5d10f14b7786d3
 
 if [ -n "$*" ]; then
     for d in $*; do

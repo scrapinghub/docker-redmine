@@ -19,11 +19,12 @@ server {
   access_log  {{REDMINE_LOG_DIR}}/nginx/redmine_access.log;
   error_log   {{REDMINE_LOG_DIR}}/nginx/redmine_error.log;
 
-  location {{REDMINE_RELATIVE_URL_ROOT}} {
-    # alias {{REDMINE_INSTALL_DIR}}/public;
+  # Capture file path after relative url. Can't use rewrite since need
+  # to pass full path to @redmine proxy.
+  location ~* {{REDMINE_RELATIVE_URL_ROOT}}(?<file>.*) {
     ## Serve static files from defined root folder.
     ## @redmine is a named location for the upstream fallback, see below.
-    try_files $uri $uri/index.html $uri.html @redmine;
+    try_files $file @redmine;
   }
 
   ## If a file, which is not found in the root folder is requested,
@@ -37,6 +38,10 @@ server {
     proxy_read_timeout      300;
     proxy_connect_timeout   300;
     proxy_redirect          off;
+    ## Long issue filters require increasing proxy buffers
+    proxy_buffers 8 8k;
+    proxy_buffer_size 32k;
+    proxy_busy_buffers_size 32k;
 
     proxy_set_header    Host                $http_host;
     proxy_set_header    X-Real-IP           $remote_addr;

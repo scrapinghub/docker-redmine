@@ -1,5 +1,64 @@
 # Changelog
 
+**3.4.4-2**
+- Undo accidental change to REDMINE_VERSION
+
+**3.4.4-1**
+- nginx: Fix REDMINE_RELATIVE_URL_ROOT #324
+
+**3.4.4**
+- redmine: upgrade to v.3.4.4
+
+**3.4.3**
+- Add docker-compose-mysql.yml
+- Fixes REDMINE_RELATIVE_URL_ROOT breaks nginx handling files #240
+- redmine: upgrade to v.3.4.3
+
+**3.4.2**
+- redmine: upgrade to v.3.4.2
+
+**3.4.1**
+- redmine: upgrade to v.3.4.1
+
+**3.4.0**
+- redmine: upgrade to v.3.4.0
+
+**3.3.4**
+- added `IMAP_STARTTLS`, `IMAP_FOLDER`, `IMAP_MOVE_ON_SUCCESS`, `IMAP_MOVE_ON_FAILURE` configuration parameters
+- upgrade to ruby2.3
+- redmine: upgrade to v.3.3.4
+
+**3.3.0**
+- redmine: upgrade to v.3.3.0
+
+**3.2.3**
+- redmine: upgrade to v.3.2.3
+
+**3.2.2**
+- redmine: upgrade to v.3.2.2
+
+**3.2.1**
+- redmine: upgrade to v.3.2.1
+
+**3.2.0-3**
+- `DB_TYPE` parameter renamed to `DB_ADAPTER` with `mysql2` and `postgresql` as accepted values.
+- exposed `DB_ENCODING` parameter
+- complete rewrite
+- renamed config `CA_CERTIFICATES_PATH` to `SSL_CA_CERTIFICATES_PATH`
+- renamed config `REDMINE_HTTPS_HSTS_ENABLED` to `NGINX_HSTS_ENABLED`
+- renamed config `REDMINE_HTTPS_HSTS_MAXAGE` to `NGINX_HSTS_MAXAGE`
+- install `darcs`
+- expose `REDMINE_ATTACHMENTS_DIR` parameter
+- expose `REDMINE_SECRET_TOKEN` parameter
+- expose `REDMINE_SUDO_MODE_ENABLED` and `REDMINE_SUDO_MODE_TIMEOUT` parameters
+- expose `REDMINE_CONCURRENT_UPLOADS` parameter
+- added `NGINX_ENABLED` parameter to disable the Nginx server
+- feature: create backups
+- feature: restore backups
+- added `REDMINE_BACKUP_EXPIRY` option
+- feature: automatic backups
+- renamed parameter `REDMINE_BACKUPS` to `REDMINE_BACKUP_SCHEDULE`
+
 **3.2.0**
 - redmine: upgrade to v.3.2.0
 

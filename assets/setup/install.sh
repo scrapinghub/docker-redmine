@@ -56,6 +56,9 @@ echo "${MYSQL2_GEM}" >> Gemfile
 echo 'gem "unicorn"' >> Gemfile
 echo 'gem "dalli", "~> 2.7.0"' >> Gemfile
 
+# Pinned version of library
+echo 'gem "rb-inotify", "0.9.10"' >> Gemfile
+
 # install gems, use cache if available
 if [[ -d ${GEM_CACHE_DIR} ]]; then
   mv ${GEM_CACHE_DIR} vendor/

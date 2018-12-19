@@ -5,7 +5,7 @@
 mkdir -p /usr/local/bin /etc/log-courier /var/lib/log-courier
 
 cd /usr/local/bin
-wget -O - https://s3.amazonaws.com/ops.scrapinghub.com/bin/log-courier-2.0.4.tgz | tar xvz
+wget -O - https://bintray.com/artifact/download/scrapinghub/misc/log-courier-2.0.4-1_trusty1_amd64.tar.gz | tar xvz
 
 cat <<! > /etc/log-courier/main.yaml
 general:
